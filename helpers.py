@@ -1,73 +1,75 @@
-import requests
 import random
 import string
 import allure
+import requests
+from config import BASE_URL, Endpoints
 
-# метод регистрации нового курьера возвращает список из логина и пароля
-def register_new_courier_and_return_login_password():
-    # метод генерирует строку, состоящую только из букв нижнего регистра
-    def generate_random_string(length):
-        letters = string.ascii_lowercase
-        random_string = ''.join(random.choice(letters) for i in range(length))
-        return random_string
 
-    login_pass = []
-    login = generate_random_string(10)
-    password = generate_random_string(10)
-    first_name = generate_random_string(10)
+def generate_random_string(length=10):
+    letters = string.ascii_lowercase
+    random_string = ''.join(random.choice(letters) for _ in range(length))
+    return random_string
 
-    payload = {
-        "login": login,
-        "password": password,
-        "firstName": first_name
+
+def create_courier_payload(login=None, password=None, first_name=None):
+    return {
+        "login": login or generate_random_string(10),
+        "password": password or generate_random_string(10),
+        "firstName": first_name or generate_random_string(10)
     }
 
-    response = requests.post('https://qa-scooter.praktikum-services.ru/api/v1/courier', data=payload)
-    
-    if response.status_code == 201:
-        login_pass.append(login)
-        login_pass.append(password)
-        login_pass.append(first_name)
-
-    return login_pass
-
-def login_courier(login, password):
-    """Авторизация курьера"""
-    payload = {
-        "login": login,
-        "password": password
-    }
-    response = requests.post('https://qa-scooter.praktikum-services.ru/api/v1/courier/login', data=payload)
-    return response
 
 def delete_courier(login, password):
-    """Удаление курьера"""
-    # Сначала получаем ID курьера
-    login_response = login_courier(login, password)
+    # Сначала авторизуемся, чтобы получить ID
+    login_payload = {"login": login, "password": password}
+    
+    with allure.step(f"Авторизация для удаления курьера {login}"):
+        login_response = requests.post(
+            BASE_URL + Endpoints.COURIER_LOGIN,
+            data=login_payload
+        )
+    
     if login_response.status_code == 200:
         courier_id = login_response.json()["id"]
-        # Удаляем курьера
-        response = requests.delete(f'https://qa-scooter.praktikum-services.ru/api/v1/courier/{courier_id}')
-        return response
+        
+        with allure.step(f"Удаление курьера ID: {courier_id}"):
+            response = requests.delete(
+                BASE_URL + Endpoints.COURIER_DELETE.format(courier_id=courier_id)
+            )
+            return response
+    
     return None
 
+
 def create_order(color=None):
-    """Создание заказа"""
     payload = {
-        "firstName": "Denchik",
+        "firstName": "Denchick",
         "lastName": "Slazit",
-        "address": "Ленинский проспект 4",
+        "address": "Leninsky prospekt 3",
         "metroStation": 4,
         "phone": "+7 800 355 35 35",
         "rentTime": 5,
         "deliveryDate": "2024-06-06",
-        "comment": "Всем привет!",
+        "comment": "Всем привет",
         "color": color if color else []
     }
-    response = requests.post('https://qa-scooter.praktikum-services.ru/api/v1/orders', json=payload)
+    
+    with allure.step(f"Создание заказа с цветом: {color}"):
+        response = requests.post(
+            BASE_URL + Endpoints.ORDER_CREATE,
+            json=payload
+        )
+    
     return response
 
-def get_orders_list():
-    """Получение списка заказов"""
-    response = requests.get('https://qa-scooter.praktikum-services.ru/api/v1/orders')
+
+def get_orders_list(limit=30, page=0):
+    params = {"limit": limit, "page": page}
+    
+    with allure.step("Получение списка заказов"):
+        response = requests.get(
+            BASE_URL + Endpoints.ORDERS_LIST,
+            params=params
+        )
+    
     return response
