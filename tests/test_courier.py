@@ -1,101 +1,75 @@
-import pytest
 import requests
 import allure
-from helpers import create_courier_payload, generate_random_string
+from helpers import create_courier_payload, register_new_courier, delete_courier, generate_random_string
 from config import BASE_URL, Endpoints
 
 
 @allure.feature('Создание курьера')
 class TestCourierCreation:
     
-    @allure.title('Успешное создание курьера')
-    def test_create_courier_success(self, cleanup_courier):
+    @allure.title('Успешное создание курьера возвращает 201 и ok:true')
+    def test_create_courier_success(self):
         payload = create_courier_payload()
+        login = payload["login"]
+        password = payload["password"]
+        first_name = payload["firstName"]
         
-        with allure.step('Отправить запрос на создание курьера'):
-            response = requests.post(
-                BASE_URL + Endpoints.COURIER_CREATE,
-                data=payload
-            )
+        response = register_new_courier(login, password, first_name)
         
-        with allure.step('Проверить ответ сервера'):
-            assert response.status_code == 201, (
-                f"Ожидался код 201, получен {response.status_code}"
-            )
-            assert response.json()["ok"] is True, (
-                f"Ответ должен содержать {{'ok': true}}, получен {response.json()}"
-            )
+        assert response.status_code == 201
+        assert response.json()["ok"] is True
         
-        cleanup_courier(payload["login"], payload["password"])
+        delete_courier(login, password)
     
-    @allure.title('Нельзя создать двух одинаковых курьеров')
-    def test_create_duplicate_courier_fails(self):
-        login = f"user_{generate_random_string(8)}"
+    @allure.title('Создание курьера с существующим логином возвращает 409')
+    def test_create_courier_with_existing_login_fails(self):
+        payload = create_courier_payload()
+        login = payload["login"]
+        password = payload["password"]
+        first_name = payload["firstName"]
         
-        payload1 = create_courier_payload(login=login)
-        response1 = requests.post(
+        response1 = register_new_courier(login, password, first_name)
+        assert response1.status_code == 201
+        
+        payload2 = create_courier_payload(
+            login=login,
+            password=generate_random_string(10),
+            first_name=generate_random_string(10)
+        )
+        response2 = requests.post(
             BASE_URL + Endpoints.COURIER_CREATE,
-            data=payload1
+            data=payload2
         )
         
-        if response1.status_code != 201:
-            pytest.skip(f"Не удалось создать первого курьера: {response1.status_code}")
+        assert response2.status_code == 409
+        assert "логин уже используется" in response2.json()["message"]
         
-        with allure.step('Попытаться создать такого же курьера'):
-            payload2 = payload1  # Используем те же данные
-            response2 = requests.post(
-                BASE_URL + Endpoints.COURIER_CREATE,
-                data=payload2
-            )
-        
-        with allure.step('Проверить ошибку дубликата'):
-            assert response2.status_code == 409, (
-                f"Ожидался код 409, получен {response2.status_code}"
-            )
-            error_message = response2.json().get("message", "")
-            assert "логин уже используется" in error_message, (
-                f"Сообщение об ошибке должно указывать на дубликат логина, получено: {error_message}"
-            )
-        
-        try:
-            from helpers import delete_courier
-            delete_courier(payload1["login"], payload1["password"])
-        except:
-            pass  
+        delete_courier(login, password)
     
-    @allure.title('Создание курьера без логина')
+    @allure.title('Создание курьера без логина возвращает 400')
     def test_create_courier_without_login_fails(self):
-        """Проверка создания курьера без логина - должен вернуть код 400"""
         payload = {
             "password": generate_random_string(10),
             "firstName": generate_random_string(10)
         }
         
-        with allure.step('Отправить запрос без логина'):
-            response = requests.post(
-                BASE_URL + Endpoints.COURIER_CREATE,
-                data=payload
-            )
+        response = requests.post(
+            BASE_URL + Endpoints.COURIER_CREATE,
+            data=payload
+        )
         
-        with allure.step('Проверить ошибку'):
-            assert response.status_code == 400, (
-                f"Ожидался код 400, получен {response.status_code}"
-            )
+        assert response.status_code == 400
     
-    @allure.title('Создание курьера без пароля')
+    @allure.title('Создание курьера без пароля возвращает 400')
     def test_create_courier_without_password_fails(self):
         payload = {
             "login": generate_random_string(10),
             "firstName": generate_random_string(10)
         }
         
-        with allure.step('Отправить запрос без пароля'):
-            response = requests.post(
-                BASE_URL + Endpoints.COURIER_CREATE,
-                data=payload
-            )
+        response = requests.post(
+            BASE_URL + Endpoints.COURIER_CREATE,
+            data=payload
+        )
         
-        with allure.step('Проверить ошибку'):
-            assert response.status_code == 400, (
-                f"Ожидался код 400, получен {response.status_code}"
-            )
+        assert response.status_code == 400
