@@ -2,39 +2,32 @@ import pytest
 import allure
 import shutil
 import os
-from helpers import delete_courier
+from helpers import delete_courier, create_courier_payload, register_new_courier
 
 
 @pytest.fixture
 def courier_credentials():
-    from helpers import create_courier_payload, register_new_courier
-    
-    # Создаем данные курьера
+    """Фикстура создает курьера и возвращает его credentials.
+    НЕ содержит assert - только подготовку данных."""
     payload = create_courier_payload()
     login = payload["login"]
     password = payload["password"]
     
-    # Регистрируем курьера
-    response = register_new_courier(login, password, payload["firstName"])
-    assert response.status_code == 201, f"Не удалось создать курьера: {response.status_code}"
+    register_new_courier(login, password, payload["firstName"])
     
-    # Передаем данные в тест
     yield {"login": login, "password": password}
     
-    # Удаляем курьера после теста
     delete_courier(login, password)
 
 
 @pytest.fixture
 def existing_courier_login():
-    from helpers import create_courier_payload, register_new_courier
-    
+    """Фикстура создает курьера и возвращает только login."""
     payload = create_courier_payload()
     login = payload["login"]
     password = payload["password"]
     
-    response = register_new_courier(login, password, payload["firstName"])
-    assert response.status_code == 201
+    register_new_courier(login, password, payload["firstName"])
     
     yield login
     

@@ -22,17 +22,11 @@ class TestCourierCreation:
         delete_courier(login, password)
     
     @allure.title('Создание курьера с существующим логином возвращает 409')
-    def test_create_courier_with_existing_login_fails(self):
-        payload = create_courier_payload()
-        login = payload["login"]
-        password = payload["password"]
-        first_name = payload["firstName"]
-        
-        response1 = register_new_courier(login, password, first_name)
-        assert response1.status_code == 201
+    def test_create_courier_with_existing_login_fails(self, courier_credentials):
+        existing_login = courier_credentials["login"]
         
         payload2 = create_courier_payload(
-            login=login,
+            login=existing_login,
             password=generate_random_string(10),
             first_name=generate_random_string(10)
         )
@@ -43,8 +37,6 @@ class TestCourierCreation:
         
         assert response2.status_code == 409
         assert "логин уже используется" in response2.json()["message"]
-        
-        delete_courier(login, password)
     
     @allure.title('Создание курьера без логина возвращает 400')
     def test_create_courier_without_login_fails(self):
