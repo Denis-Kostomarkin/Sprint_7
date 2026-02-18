@@ -15,9 +15,12 @@ class TestCourierCreation:
         first_name = payload["firstName"]
         
         response = register_new_courier(login, password, first_name)
+
+        response_data = response.json()
         
-        assert response.status_code == 201
-        assert response.json()["ok"] is True
+        assert response.status_code == 201, f"Ожидался статус 201, получен {response.status_code}"
+        assert "ok" in response_data, f"В ответе отсутствует поле 'ok'. Ответ: {response_data}"
+        assert response_data["ok"] is True, f"Поле 'ok' должно быть true, получено: {response_data['ok']}"
         
         delete_courier(login, password)
     
@@ -34,9 +37,13 @@ class TestCourierCreation:
             BASE_URL + Endpoints.COURIER_CREATE,
             data=payload2
         )
+
+        response_data = response2.json()
         
-        assert response2.status_code == 409
-        assert "логин уже используется" in response2.json()["message"]
+        assert response2.status_code == 409, f"Ожидался статус 409, получен {response2.status_code}"
+        assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
+        assert "логин уже используется" in response_data["message"].lower(), \
+            f"Ожидалось сообщение 'логин уже используется', получено: {response_data['message']}"
     
     @allure.title('Создание курьера без логина возвращает 400')
     def test_create_courier_without_login_fails(self):
@@ -49,8 +56,12 @@ class TestCourierCreation:
             BASE_URL + Endpoints.COURIER_CREATE,
             data=payload
         )
+
+        response_data = response.json()
         
-        assert response.status_code == 400
+        assert response.status_code == 400, f"Ожидался статус 400, получен {response.status_code}"
+        assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
+        assert len(response_data["message"]) > 0, "Поле 'message' не должно быть пустым"
     
     @allure.title('Создание курьера без пароля возвращает 400')
     def test_create_courier_without_password_fails(self):
@@ -63,5 +74,9 @@ class TestCourierCreation:
             BASE_URL + Endpoints.COURIER_CREATE,
             data=payload
         )
+
+        response_data = response.json()
         
-        assert response.status_code == 400
+        assert response.status_code == 400, f"Ожидался статус 400, получен {response.status_code}"
+        assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
+        assert len(response_data["message"]) > 0, "Поле 'message' не должно быть пустым"
