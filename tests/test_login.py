@@ -38,7 +38,8 @@ class TestCourierLogin:
         
         assert response.status_code == 400, f"Ожидался статус 400, получен {response.status_code}"
         assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
-        assert len(response_data["message"]) > 0, "Поле 'message' не должно быть пустым"
+        assert response_data["message"] == "Недостаточно данных для входа", \
+            f"Ожидалось сообщение 'Недостаточно данных для входа', получено: '{response_data['message']}'"
     
     @allure.title('Авторизация без пароля возвращает 400')
     def test_login_without_password_fails(self, courier_credentials):
@@ -54,7 +55,8 @@ class TestCourierLogin:
         
         assert response.status_code == 400, f"Ожидался статус 400, получен {response.status_code}"
         assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
-        assert len(response_data["message"]) > 0, "Поле 'message' не должно быть пустым"
+        assert response_data["message"] == "Недостаточно данных для входа", \
+            f"Ожидалось сообщение 'Недостаточно данных для входа', получено: '{response_data['message']}'"
     
     @allure.title('Авторизация с неверным логином возвращает 404')
     def test_login_with_wrong_login_fails(self, courier_credentials):
@@ -74,8 +76,8 @@ class TestCourierLogin:
         
         assert response.status_code == 404, f"Ожидался статус 404, получен {response.status_code}"
         assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
-        assert "Учетная запись не найдена" in response_data["message"] or "not found" in response_data["message"].lower(), \
-            f"Ожидалось сообщение об ошибке 'Учетная запись не найдена', получено: {response_data['message']}"
+        assert response_data["message"] == "Учетная запись не найдена", \
+            f"Ожидалось сообщение 'Учетная запись не найдена', получено: '{response_data['message']}'"
     
     @allure.title('Авторизация с неверным паролем возвращает 404')
     def test_login_with_wrong_password_fails(self, courier_credentials):
@@ -95,8 +97,8 @@ class TestCourierLogin:
         
         assert response.status_code == 404, f"Ожидался статус 404, получен {response.status_code}"
         assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
-        assert "Учетная запись не найдена" in response_data["message"] or "not found" in response_data["message"].lower(), \
-            f"Ожидалось сообщение об ошибке 'Учетная запись не найдена', получено: {response_data['message']}"
+        assert response_data["message"] == "Учетная запись не найдена", \
+            f"Ожидалось сообщение 'Учетная запись не найдена', получено: '{response_data['message']}'"
     
     @allure.title('Авторизация несуществующего курьера возвращает 404')
     def test_login_nonexistent_courier_fails(self):
@@ -114,5 +116,5 @@ class TestCourierLogin:
         
         assert response.status_code == 404, f"Ожидался статус 404, получен {response.status_code}"
         assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
-        assert "Учетная запись не найдена" in response_data["message"] or "not found" in response_data["message"].lower(), \
-            f"Ожидалось сообщение об ошибке 'Учетная запись не найдена', получено: {response_data['message']}"
+        assert response_data["message"] == "Учетная запись не найдена", \
+            f"Ожидалось сообщение 'Учетная запись не найдена', получено: '{response_data['message']}'"

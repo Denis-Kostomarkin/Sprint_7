@@ -37,13 +37,13 @@ class TestCourierCreation:
             BASE_URL + Endpoints.COURIER_CREATE,
             data=payload2
         )
-
+        
         response_data = response2.json()
         
         assert response2.status_code == 409, f"Ожидался статус 409, получен {response2.status_code}"
         assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
-        assert "логин уже используется" in response_data["message"].lower(), \
-            f"Ожидалось сообщение 'логин уже используется', получено: {response_data['message']}"
+        assert response_data["message"] == "Этот логин уже используется. Попробуйте другой.", \
+            f"Ожидалось сообщение 'Этот логин уже используется. Попробуйте другой.', получено: '{response_data['message']}'"
     
     @allure.title('Создание курьера без логина возвращает 400')
     def test_create_courier_without_login_fails(self):
@@ -56,12 +56,13 @@ class TestCourierCreation:
             BASE_URL + Endpoints.COURIER_CREATE,
             data=payload
         )
-
+        
         response_data = response.json()
         
         assert response.status_code == 400, f"Ожидался статус 400, получен {response.status_code}"
         assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
-        assert len(response_data["message"]) > 0, "Поле 'message' не должно быть пустым"
+        assert response_data["message"] == "Недостаточно данных для создания учетной записи", \
+            f"Ожидалось сообщение 'Недостаточно данных для создания учетной записи', получено: '{response_data['message']}'"
     
     @allure.title('Создание курьера без пароля возвращает 400')
     def test_create_courier_without_password_fails(self):
@@ -74,9 +75,10 @@ class TestCourierCreation:
             BASE_URL + Endpoints.COURIER_CREATE,
             data=payload
         )
-
+        
         response_data = response.json()
         
         assert response.status_code == 400, f"Ожидался статус 400, получен {response.status_code}"
         assert "message" in response_data, f"В ответе отсутствует поле 'message'. Ответ: {response_data}"
-        assert len(response_data["message"]) > 0, "Поле 'message' не должно быть пустым"
+        assert response_data["message"] == "Недостаточно данных для создания учетной записи", \
+            f"Ожидалось сообщение 'Недостаточно данных для создания учетной записи', получено: '{response_data['message']}'"
